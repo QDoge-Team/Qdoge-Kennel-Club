@@ -10,6 +10,8 @@ import MonthlyAirdropRangeResults from "./MonthlyAirdropRangeResults";
 import OrderbookCockpit from "./OrderbookCockpit";
 import QTreatzOverview from "./QTreatzOverview";
 import EpochNfts from "./EpochNfts";
+import EpochQswapTransactions from "./EpochQswapTransactions";
+import EpochRangeQswapTransactions from "./EpochRangeQswapTransactions";
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
 import { useQubicConnect } from "@/components/connect/QubicConnectContext";
@@ -62,7 +64,7 @@ const DisplaySection: React.FC<DisplaySectionProps> = ({ period, activity }) => 
             )}
             <p className="text-xs text-muted-foreground mt-1">{periodLabel}</p>
           </div>
-          {(activity === "Trades" || activity === "Transfers" || activity === "Airdrop") && (
+          {(activity === "Trades" || activity === "Transfers" || activity === "Qswap" || activity === "Airdrop") && (
             <div className="relative w-full max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -106,6 +108,12 @@ const DisplaySection: React.FC<DisplaySectionProps> = ({ period, activity }) => 
               <EpochTransfers epoch={period.epoch} searchTerm={searchTerm} connectedWallet={connectedWallet} />
             ) : (
               <EpochRangeTransfers startEpoch={period.startEpoch} endEpoch={period.endEpoch} searchTerm={searchTerm} connectedWallet={connectedWallet} />
+            )
+          ) : activity === "Qswap" ? (
+            period.kind === "epoch" ? (
+              <EpochQswapTransactions epoch={period.epoch} searchTerm={searchTerm} connectedWallet={connectedWallet} />
+            ) : (
+              <EpochRangeQswapTransactions startEpoch={period.startEpoch} endEpoch={period.endEpoch} searchTerm={searchTerm} connectedWallet={connectedWallet} />
             )
           ) : activity === "Airdrop" ? (
             period.kind === "epoch" ? (

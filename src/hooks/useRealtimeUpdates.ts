@@ -3,8 +3,9 @@ import { useAtom } from "jotai";
 import { useSocketIO } from "./useSocketIO";
 import { tradesAtom } from "@/store/trades";
 import { refetchAtom } from "@/store/action";
+import { qswapTransactionsAtom } from "@/store/qswapTransactions";
 import { fetchTrades } from "@/services/api.service";
-import { fetchQTreatzOverview, type QTreatzOverview } from "@/services/backend.service";
+import { fetchQTreatzOverview, fetchQSwapTransactions, type QTreatzOverview } from "@/services/backend.service";
 import { qtreatzOverviewAtom } from "@/store/qtreatzOverview";
 import { BACKEND_API_URL } from "@/constants";
 
@@ -18,6 +19,7 @@ import { BACKEND_API_URL } from "@/constants";
  *   - transfers_updated → trigger global refetch (assets + balances)
  *   - epoch_synced      → trigger global refetch
  *   - qtreatz_overview_updated → replace QTREATZ dashboard payload
+ *   - qswap_transactions_updated → refetch Qswap QDOGE transactions
  */
 export function useRealtimeUpdates() {
   const socketUrl = BACKEND_API_URL.replace("/api", "") || window.location.origin;
@@ -30,6 +32,7 @@ export function useRealtimeUpdates() {
   const [, setTrades] = useAtom(tradesAtom);
   const [, setRefetch] = useAtom(refetchAtom);
   const [, setQTreatzOverview] = useAtom(qtreatzOverviewAtom);
+  const [, setQSwapTransactions] = useAtom(qswapTransactionsAtom);
 
   useEffect(() => {
     if (!isConnected) return;
@@ -61,13 +64,24 @@ export function useRealtimeUpdates() {
       setQTreatzOverview(data as QTreatzOverview);
     });
 
+    const unsubQSwapTransactions = on("qswap_transactions_updated", async () => {
+      console.log("[Realtime] qswap_transactions_updated — refetching Qswap transactions");
+      try {
+        const transactions = await fetchQSwapTransactions(0, 100);
+        setQSwapTransactions(transactions);
+      } catch (error) {
+        console.error("[Realtime] Failed to fetch Qswap transactions:", error);
+      }
+    });
+
     return () => {
       unsubTrades();
       unsubTransfers();
       unsubEpoch();
       unsubQTreatzOverview();
+      unsubQSwapTransactions();
     };
-  }, [isConnected, on, setTrades, setRefetch, setQTreatzOverview]);
+  }, [isConnected, on, setTrades, setRefetch, setQTreatzOverview, setQSwapTransactions]);
 
   return { isConnected };
 }
