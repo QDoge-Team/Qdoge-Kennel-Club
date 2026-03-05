@@ -1,4 +1,4 @@
-export type ActivityType = "Orderbook" | "Trades" | "Transfers" | "Airdrop" | "QTREATZ" | "NFTS";
+export type ActivityType = "Orderbook" | "Trades" | "Transfers" | "Qswap" | "Airdrop" | "QTREATZ" | "NFTS";
 
 export interface ActivityData {
   epoch: number;

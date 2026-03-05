@@ -190,6 +190,42 @@ export interface QubicBayListingsResponse {
   totalResults: number;
 }
 
+export interface QSwapTransaction {
+  transaction_id: number;
+  tx_hash: string;
+  wallet: string;
+  source: string;
+  amount: string;
+  number_of_shares: string;
+  tick_number: number;
+  timestamp: string;
+  issuer: string;
+  asset_name: string;
+  transaction_type: "buy" | "sell";
+  input_type: number;
+}
+
+export interface QSwapTransactionsResponse {
+  page: number;
+  size: number;
+  transactions: QSwapTransaction[];
+}
+
+export interface WalletQSwapTransactionsResponse {
+  wallet_id: string;
+  page: number;
+  size: number;
+  total_shares_bought: string;
+  total_shares_sold: string;
+  net_shares: string;
+  transactions: QSwapTransaction[];
+}
+
+export interface EpochQSwapTransactionsResponse {
+  epoch_num: number;
+  transactions: QSwapTransaction[];
+}
+
 // Fetch all epochs
 export const fetchEpochs = async (): Promise<Epoch[]> => {
   const response = await fetch(`${BACKEND_API_URL}/epochs`);
@@ -524,6 +560,63 @@ export const setEpochThreshold = async (
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: response.statusText }));
     throw new Error(error.detail || `Failed to set threshold: ${response.statusText}`);
+  }
+  return response.json();
+};
+
+// Fetch all QDOGE transactions (paginated)
+export const fetchQSwapTransactions = async (page = 0, size = 100, wallet?: string): Promise<QSwapTransaction[]> => {
+  const params = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+  });
+  if (wallet) {
+    params.append("wallet", wallet);
+  }
+  
+  const response = await fetch(`${BACKEND_API_URL}/qswap-transactions?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch QDOGE transactions: ${response.statusText}`);
+  }
+  const data: QSwapTransactionsResponse = await response.json();
+  return data.transactions;
+};
+
+// Fetch QDOGE transactions for a specific wallet
+export const fetchWalletQSwapTransactions = async (walletId: string, page = 0, size = 100): Promise<WalletQSwapTransactionsResponse> => {
+  const params = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+  });
+  
+  const response = await fetch(`${BACKEND_API_URL}/qswap-transactions/wallet/${walletId}?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch QDOGE transactions for wallet ${walletId}: ${response.statusText}`);
+  }
+  return response.json();
+};
+
+// Fetch QDOGE transactions for a specific epoch
+export const fetchEpochQSwapTransactions = async (epochNum: number): Promise<QSwapTransaction[]> => {
+  const response = await fetch(`${BACKEND_API_URL}/epochs/${epochNum}/qswap-transactions`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch QDOGE transactions for epoch ${epochNum}: ${response.statusText}`);
+  }
+  const data: EpochQSwapTransactionsResponse = await response.json();
+  return data.transactions;
+};
+
+// Admin: Manually trigger QDOGE purchase sync
+export const syncQSwapTransactions = async (apiKey: string): Promise<{ success: boolean; fetched: number; inserted: number; skipped: number }> => {
+  const response = await fetch(`${BACKEND_API_URL}/admin/qswap-transactions/sync`, {
+    method: "POST",
+    headers: {
+      "X-Admin-API-Key": apiKey,
+    },
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(error.detail || `Failed to sync QDOGE transactions: ${response.statusText}`);
   }
   return response.json();
 };

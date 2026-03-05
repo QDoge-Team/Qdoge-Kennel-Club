@@ -8,8 +8,8 @@ interface ActivitySelectionSectionProps {
   onActivitySelect: (activity: ActivityType) => void;
 }
 
-const ACTIVITY_TYPES: ActivityType[] = ["Orderbook", "Trades", "Transfers", "Airdrop","QTREATZ","NFTS"];
-const RANGE_ACTIVITY_TYPES: ActivityType[] = ["Orderbook", "Trades", "Transfers", "Airdrop"];
+const ACTIVITY_TYPES: ActivityType[] = ["Orderbook", "Trades", "Transfers", "Qswap", "Airdrop","QTREATZ","NFTS"];
+const RANGE_ACTIVITY_TYPES: ActivityType[] = ["Orderbook", "Trades", "Transfers", "Qswap", "Airdrop"];
 
 const ActivitySelectionSection: React.FC<ActivitySelectionSectionProps> = ({
   period, selectedActivity, onActivitySelect,
