@@ -2,7 +2,7 @@ import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { fetchAirdropResults, fetchAirdropPreview, fetchUserInfo, type AirdropResult } from "@/services/backend.service";
+import { fetchAirdropResults, fetchAirdropPreview, type AirdropResult } from "@/services/backend.service";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Download } from "lucide-react";
@@ -13,6 +13,7 @@ interface AirdropResultsProps {
   epoch: number;
   searchTerm?: string;
   connectedWallet?: string | null;
+  isAdmin?: boolean;
 }
 
 const MEDAL_EMOJIS = { 1: "🥇", 2: "🥈", 3: "🥉" } as const;
@@ -46,50 +47,38 @@ const headerClass = "text-xs sticky top-0 z-20 border-b border-border/60 bg-card
 const bodyClass = "divide-y divide-border/40 text-muted-foreground text-xs";
 const cardClass = "flex-1 min-h-0 border border-border/60 bg-card/70 p-2 shadow-inner shadow-black/5 dark:shadow-black/40";
 
-const AirdropResults: React.FC<AirdropResultsProps> = ({ epoch, searchTerm = "", connectedWallet = null }) => {
+const AirdropResults: React.FC<AirdropResultsProps> = ({ epoch, searchTerm = "", connectedWallet = null, isAdmin = false }) => {
   const [results, setResults] = useState<AirdropResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPreview, setIsPreview] = useState(false);
   const [totalAirdrop, setTotalAirdrop] = useState<string>("0");
   const [threshold, setThreshold] = useState<string>("0");
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  // Check if user is admin
-  useEffect(() => {
-    const checkAdminRole = async () => {
-      if (!connectedWallet) {
-        setIsAdmin(false);
-        return;
-      }
-      try {
-        const userInfo = await fetchUserInfo(connectedWallet);
-        setIsAdmin(userInfo.role === "admin");
-      } catch {
-        setIsAdmin(false);
-      }
-    };
-    checkAdminRole();
-  }, [connectedWallet]);
 
   useEffect(() => {
     const getAirdropResults = async () => {
+      // Early return if not admin
+      if (!isAdmin || !connectedWallet) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         setError(null);
 
         try {
-          const storedResults = await fetchAirdropResults(epoch);
+          const storedResults = await fetchAirdropResults(epoch, connectedWallet);
           if (storedResults.length > 0) {
             setResults(storedResults);
             setIsPreview(false);
             return;
           }
-        } catch {
-          console.log("No stored results, fetching preview...");
+        } catch (err) {
+          console.log("No stored results, fetching preview...", err);
         }
 
-        const previewData = await fetchAirdropPreview(epoch);
+        const previewData = await fetchAirdropPreview(epoch, connectedWallet);
         setResults(previewData.results);
         setIsPreview(previewData.preview);
         setTotalAirdrop(previewData.total_airdrop);
@@ -103,7 +92,7 @@ const AirdropResults: React.FC<AirdropResultsProps> = ({ epoch, searchTerm = "",
     };
 
     getAirdropResults();
-  }, [epoch]);
+  }, [epoch, isAdmin, connectedWallet]);
 
   const filteredResults = useMemo(() => {
     if (!searchTerm.trim()) return results;
@@ -132,6 +121,18 @@ const AirdropResults: React.FC<AirdropResultsProps> = ({ epoch, searchTerm = "",
     XLSX.utils.book_append_sheet(workbook, worksheet, "Airdrop Results");
     XLSX.writeFile(workbook, `airdrop_epoch_${epoch}.xlsx`);
   }, [results, epoch]);
+
+  // Admin-only access check (after all hooks)
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="rounded-lg border-2 border-dashed border-border p-6 md:p-10 bg-muted/10 w-full max-w-2xl text-center">
+          <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2">Access Restricted</h3>
+          <p className="text-muted-foreground">Airdrop results are only available to administrators.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full flex-col gap-4">
