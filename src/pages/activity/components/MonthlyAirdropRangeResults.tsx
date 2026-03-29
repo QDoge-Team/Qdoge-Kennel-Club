@@ -54,18 +54,6 @@ const MonthlyAirdropRangeResults: React.FC<MonthlyAirdropRangeResultsProps> = ({
   const [totalAirdrop, setTotalAirdrop] = useState<string>("0");
   const [isOngoing, setIsOngoing] = useState(false);
 
-  // Admin-only access check
-  if (!isAdmin) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="rounded-lg border-2 border-dashed border-border p-6 md:p-10 bg-muted/10 w-full max-w-2xl text-center">
-          <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2">Access Restricted</h3>
-          <p className="text-muted-foreground">Monthly airdrop results are only available to administrators.</p>
-        </div>
-      </div>
-    );
-  }
-
   useEffect(() => {
     const load = async () => {
       // Early return if not admin
@@ -112,6 +100,18 @@ const MonthlyAirdropRangeResults: React.FC<MonthlyAirdropRangeResultsProps> = ({
     XLSX.utils.book_append_sheet(workbook, worksheet, "Monthly Airdrop");
     XLSX.writeFile(workbook, `monthly_airdrop_${startEpoch}~${endEpoch}.xlsx`);
   }, [results, startEpoch, endEpoch]);
+
+  // Admin-only access check (after all hooks)
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="rounded-lg border-2 border-dashed border-border p-6 md:p-10 bg-muted/10 w-full max-w-2xl text-center">
+          <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2">Access Restricted</h3>
+          <p className="text-muted-foreground">Monthly airdrop results are only available to administrators.</p>
+        </div>
+      </div>
+    );
+  }
 
   const requirements = (
     <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-muted-foreground">

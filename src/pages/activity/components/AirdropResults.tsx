@@ -122,7 +122,7 @@ const AirdropResults: React.FC<AirdropResultsProps> = ({ epoch, searchTerm = "",
     XLSX.writeFile(workbook, `airdrop_epoch_${epoch}.xlsx`);
   }, [results, epoch]);
 
-  // Admin-only access check
+  // Admin-only access check (after all hooks)
   if (!isAdmin) {
     return (
       <div className="flex items-center justify-center py-12">
