@@ -6,16 +6,19 @@ interface ActivitySelectionSectionProps {
   period: { kind: "epoch"; epoch: number } | { kind: "range"; startEpoch: number; endEpoch: number };
   selectedActivity: ActivityType | null;
   onActivitySelect: (activity: ActivityType) => void;
+  isAdmin?: boolean;
 }
 
 const ACTIVITY_TYPES: ActivityType[] = ["Orderbook", "Trades", "Transfers", "Qswap", "Airdrop","QTREATZ","NFTS"];
 const RANGE_ACTIVITY_TYPES: ActivityType[] = ["Orderbook", "Trades", "Transfers", "Qswap", "Airdrop"];
 
 const ActivitySelectionSection: React.FC<ActivitySelectionSectionProps> = ({
-  period, selectedActivity, onActivitySelect,
+  period, selectedActivity, onActivitySelect, isAdmin = false,
 }) => {
   const isRange = period.kind === "range";
-  const activityTypes = isRange ? RANGE_ACTIVITY_TYPES : ACTIVITY_TYPES;
+  const activityTypes = (isRange ? RANGE_ACTIVITY_TYPES : ACTIVITY_TYPES).filter(
+    (a) => a !== "Airdrop" || isAdmin
+  );
   const badge = isRange ? `${period.startEpoch}~${period.endEpoch}` : `${period.epoch}`;
 
   return (

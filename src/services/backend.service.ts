@@ -275,9 +275,13 @@ export const fetchEpochRangeTrades = async (startEpoch: number, endEpoch: number
   return data.trades;
 };
 
-// Fetch airdrop results for a specific epoch
-export const fetchAirdropResults = async (epochNum: number): Promise<AirdropResult[]> => {
-  const response = await fetch(`${BACKEND_API_URL}/epochs/${epochNum}/airdrop-results`);
+// Fetch airdrop results for a specific epoch (ADMIN ONLY)
+export const fetchAirdropResults = async (epochNum: number, walletId: string): Promise<AirdropResult[]> => {
+  const response = await fetch(`${BACKEND_API_URL}/epochs/${epochNum}/airdrop-results`, {
+    headers: {
+      "X-Wallet-Id": walletId,
+    },
+  });
   if (!response.ok) {
     throw new Error(`Failed to fetch airdrop results for epoch ${epochNum}: ${response.statusText}`);
   }
@@ -285,9 +289,13 @@ export const fetchAirdropResults = async (epochNum: number): Promise<AirdropResu
   return data.results;
 };
 
-// Fetch airdrop preview for a specific epoch (real-time calculation)
-export const fetchAirdropPreview = async (epochNum: number): Promise<AirdropPreviewResponse> => {
-  const response = await fetch(`${BACKEND_API_URL}/epochs/${epochNum}/airdrop-preview`);
+// Fetch airdrop preview for a specific epoch (real-time calculation) (ADMIN ONLY)
+export const fetchAirdropPreview = async (epochNum: number, walletId: string): Promise<AirdropPreviewResponse> => {
+  const response = await fetch(`${BACKEND_API_URL}/epochs/${epochNum}/airdrop-preview`, {
+    headers: {
+      "X-Wallet-Id": walletId,
+    },
+  });
   if (!response.ok) {
     throw new Error(`Failed to fetch airdrop preview for epoch ${epochNum}: ${response.statusText}`);
   }
@@ -314,8 +322,12 @@ export const fetchEpochRangeTransfers = async (startEpoch: number, endEpoch: num
   return data.transfers;
 };
 
-export const fetchMonthlyAirdropPreview = async (startEpoch: number, endEpoch: number): Promise<MonthlyAirdropPreviewResponse> => {
-  const response = await fetch(`${BACKEND_API_URL}/epoch-ranges/${startEpoch}/${endEpoch}/monthly-airdrop-preview`);
+export const fetchMonthlyAirdropPreview = async (startEpoch: number, endEpoch: number, walletId: string): Promise<MonthlyAirdropPreviewResponse> => {
+  const response = await fetch(`${BACKEND_API_URL}/epoch-ranges/${startEpoch}/${endEpoch}/monthly-airdrop-preview`, {
+    headers: {
+      "X-Wallet-Id": walletId,
+    },
+  });
   if (!response.ok) {
     const detail = await response.json().catch(() => null);
     const msg = typeof detail?.detail === "string" ? detail.detail : response.statusText;

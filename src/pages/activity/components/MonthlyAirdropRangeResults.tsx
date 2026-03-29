@@ -13,6 +13,7 @@ interface MonthlyAirdropRangeResultsProps {
   endEpoch: number;
   searchTerm?: string;
   connectedWallet?: string | null;
+  isAdmin?: boolean;
 }
 
 const MEDAL_EMOJIS = { 1: "🥇", 2: "🥈", 3: "🥉" } as const;
@@ -46,19 +47,37 @@ const headerClass = "text-xs sticky top-0 z-20 border-b border-border/60 bg-card
 const bodyClass = "divide-y divide-border/40 text-muted-foreground text-xs";
 const cardClass = "flex-1 min-h-0 border border-border/60 bg-card/70 p-2 shadow-inner shadow-black/5 dark:shadow-black/40";
 
-const MonthlyAirdropRangeResults: React.FC<MonthlyAirdropRangeResultsProps> = ({ startEpoch, endEpoch, searchTerm = "", connectedWallet = null }) => {
+const MonthlyAirdropRangeResults: React.FC<MonthlyAirdropRangeResultsProps> = ({ startEpoch, endEpoch, searchTerm = "", connectedWallet = null, isAdmin = false }) => {
   const [results, setResults] = useState<MonthlyAirdropResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalAirdrop, setTotalAirdrop] = useState<string>("0");
   const [isOngoing, setIsOngoing] = useState(false);
 
+  // Admin-only access check
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="rounded-lg border-2 border-dashed border-border p-6 md:p-10 bg-muted/10 w-full max-w-2xl text-center">
+          <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2">Access Restricted</h3>
+          <p className="text-muted-foreground">Monthly airdrop results are only available to administrators.</p>
+        </div>
+      </div>
+    );
+  }
+
   useEffect(() => {
     const load = async () => {
+      // Early return if not admin
+      if (!isAdmin || !connectedWallet) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         setError(null);
-        const data = await fetchMonthlyAirdropPreview(startEpoch, endEpoch);
+        const data = await fetchMonthlyAirdropPreview(startEpoch, endEpoch, connectedWallet);
         setResults(data.results);
         setTotalAirdrop(data.total_airdrop);
         setIsOngoing(data.is_ongoing);
@@ -69,7 +88,7 @@ const MonthlyAirdropRangeResults: React.FC<MonthlyAirdropRangeResultsProps> = ({
       }
     };
     load();
-  }, [startEpoch, endEpoch]);
+  }, [startEpoch, endEpoch, isAdmin, connectedWallet]);
 
   const filteredResults = useMemo(() => {
     if (!searchTerm.trim()) return results;
@@ -127,7 +146,7 @@ const MonthlyAirdropRangeResults: React.FC<MonthlyAirdropRangeResultsProps> = ({
               Total: <span className="font-semibold text-foreground">{fmt(Number(totalAirdrop))}</span>
             </div>
           )}
-          {results.length > 0 && (
+          {isAdmin && results.length > 0 && (
             <Button variant="outline" size="sm" onClick={handleDownloadExcel} className="gap-2">
               <Download className="h-4 w-4" />
               Download Excel

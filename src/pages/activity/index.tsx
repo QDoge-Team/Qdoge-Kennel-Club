@@ -6,7 +6,7 @@ import EpochSelectionSection from "./components/EpochSelectionSection";
 import ActivitySelectionSection from "./components/ActivitySelectionSection";
 import DisplaySection from "./components/DisplaySection";
 import { ActivityType } from "./types";
-import { fetchEpochs, type Epoch } from "@/services/backend.service";
+import { fetchEpochs, fetchUserInfo, type Epoch } from "@/services/backend.service";
 import { useQubicConnect } from "@/components/connect/QubicConnectContext";
 import { Button } from "@/components/ui/button";
 import { Wallet, PanelLeftOpen } from "lucide-react";
@@ -50,7 +50,7 @@ const buildEpochSelectionItems = (epochs: number[]): EpochSelectionItem[] => {
 };
 
 const Activity: React.FC = () => {
-  const { connected, toggleConnectModal } = useQubicConnect();
+  const { connected, toggleConnectModal, wallet } = useQubicConnect();
   const [tickInfo] = useAtom(tickInfoAtom);
   const [selectedPeriod, setSelectedPeriod] = useState<SelectedPeriod | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<ActivityType | null>(null);
@@ -58,6 +58,7 @@ const Activity: React.FC = () => {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [backendEpochs, setBackendEpochs] = useState<Epoch[]>([]);
   const [isLoadingEpochs, setIsLoadingEpochs] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const loadEpochs = async () => {
@@ -73,6 +74,23 @@ const Activity: React.FC = () => {
     };
     loadEpochs();
   }, []);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const publicKey = wallet?.publicKey;
+      if (!publicKey) {
+        setIsAdmin(false);
+        return;
+      }
+      try {
+        const userInfo = await fetchUserInfo(publicKey);
+        setIsAdmin(userInfo.role === "admin");
+      } catch {
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
+  }, [wallet?.publicKey]);
 
   const currentEpoch = useMemo(() => {
     if (backendEpochs.length > 0) {
@@ -181,6 +199,7 @@ const Activity: React.FC = () => {
               period={selectedPeriod}
               selectedActivity={selectedActivity}
               onActivitySelect={handleActivitySelect}
+              isAdmin={isAdmin}
             />
           )}
         </AnimatePresence>
@@ -192,6 +211,7 @@ const Activity: React.FC = () => {
             key={`${selectedId}-${selectedActivity}`}
             period={selectedPeriod}
             activity={selectedActivity}
+            isAdmin={isAdmin}
           />
         )}
       </AnimatePresence>

@@ -24,9 +24,10 @@ type OrderbookAsset = (typeof ORDERBOOK_ASSETS)[number];
 interface DisplaySectionProps {
   period: { kind: "epoch"; epoch: number } | { kind: "range"; startEpoch: number; endEpoch: number };
   activity: ActivityType;
+  isAdmin?: boolean;
 }
 
-const DisplaySection: React.FC<DisplaySectionProps> = ({ period, activity }) => {
+const DisplaySection: React.FC<DisplaySectionProps> = ({ period, activity, isAdmin = false }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [orderbookAsset, setOrderbookAsset] = useState<OrderbookAsset>("QDOGE");
   const { wallet } = useQubicConnect();
@@ -117,9 +118,9 @@ const DisplaySection: React.FC<DisplaySectionProps> = ({ period, activity }) => 
             )
           ) : activity === "Airdrop" ? (
             period.kind === "epoch" ? (
-              <AirdropResults epoch={period.epoch} searchTerm={searchTerm} connectedWallet={connectedWallet} />
+              <AirdropResults epoch={period.epoch} searchTerm={searchTerm} connectedWallet={connectedWallet} isAdmin={isAdmin} />
             ) : (
-              <MonthlyAirdropRangeResults startEpoch={period.startEpoch} endEpoch={period.endEpoch} searchTerm={searchTerm} connectedWallet={connectedWallet} />
+              <MonthlyAirdropRangeResults startEpoch={period.startEpoch} endEpoch={period.endEpoch} searchTerm={searchTerm} connectedWallet={connectedWallet} isAdmin={isAdmin} />
             )
           ) : activity === "QTREATZ" ? (
             <QTreatzOverview />
